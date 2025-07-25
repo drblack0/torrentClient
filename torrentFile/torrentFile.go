@@ -36,6 +36,7 @@ type TorrentFile struct {
 	Comment      string     `bencode:"comment"        json:"comment"`
 	CreatedBy    string     `bencode:"created by"     json:"created by"`
 	Encoding     string     `bencode:"encoding"       json:"encoding"`
+	InfoBytes    []byte     `bencode:"infoBytes"	  json:"infoBytes"`
 }
 
 func Open(path string) (*TorrentFile, error) {
@@ -46,6 +47,15 @@ func Open(path string) (*TorrentFile, error) {
 	}
 
 	decodedData, err := bencode.Decode(fileReader)
+
+	infoMap, ok := decodedData.(map[string]interface{})["info"]
+
+	if !ok {
+		return nil, fmt.Errorf("error while asserting info map")
+	}
+
+	var infoBuf bytes.Buffer
+	err = bencode.Encode(&infoBuf, infoMap)
 
 	if err != nil {
 		return nil, fmt.Errorf("error while decoding the data: %v", err)
@@ -64,33 +74,14 @@ func Open(path string) (*TorrentFile, error) {
 		return nil, fmt.Errorf("error while unmarshalling the data %v", err)
 	}
 
+	res.InfoBytes = infoBuf.Bytes()
+
 	return res, nil
 }
 
-func (tf *TorrentFile) GetInfoHash(info map[string]interface{}) ([]byte, error) {
-	// var res map[string]interface{}
+func (tf *TorrentFile) GetInfoHash() ([]byte, error) {
 
-	// jsonBytes, err := json.Marshal(info)
-
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// err = json.Unmarshal(jsonBytes, &res)
-
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	var buf bytes.Buffer
-
-	err := bencode.Encode(&buf, info)
-
-	if err != nil {
-		return nil, err
-	}
-
-	shaSum := sha1.Sum(buf.Bytes())
+	shaSum := sha1.Sum(tf.InfoBytes)
 	return shaSum[:], nil
 }
 

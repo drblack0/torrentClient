@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -22,10 +23,12 @@ func main() {
 		fmt.Println("error is here: ", err)
 		os.Exit(1)
 	}
-	
+
+	// fmt.Println("tf: ", tf.Info)
+
 	hash, err := tf.GetInfoHash()
 
-	fmt.Println("infohash: ", string(hash))
+	fmt.Println("infohash: ", hex.EncodeToString(hash))
 
 	fmt.Println("hash error: ", err)
 	trackerUrl, err := tf.BuildTrackerUrl([20]byte(hash))

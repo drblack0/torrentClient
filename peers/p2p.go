@@ -28,11 +28,3 @@ func Unmarshal(peersBin []byte) ([]Peer, error) {
 	}
 	return peers, nil
 }
-
-// func ConnectToPeers() {
-// 	conn, err := net.DialTimeout("tcp", peer.String(), 3*time.Second)
-// 	if err != nil {
-// 		fmt.Errorf("error here")
-// 	}
-// 	fmt.Println(conn)
-// }
