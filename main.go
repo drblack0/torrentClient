@@ -2,13 +2,13 @@ package main
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
 
 	"bitTorrentClient/bencode"
+	"bitTorrentClient/peers"
 	"bitTorrentClient/torrentFile"
 )
 
@@ -51,12 +51,10 @@ func main() {
 
 	decodedResponse, err := bencode.Decode(resp.Body)
 
-	jsonBytes, err := json.MarshalIndent(decodedResponse, "", " ")
+	peerList := decodedResponse.(map[string]interface{})["peers"]
 
-	if err != nil {
-		fmt.Println("error while marshalling: ", err)
-	}
+	peerListDecoded, err := peers.Unmarshal(peerList)
 
-	fmt.Println(string(jsonBytes))
+	fmt.Println("peerlist: ", peerListDecoded[1].IP)
 
 }
