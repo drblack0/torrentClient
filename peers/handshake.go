@@ -1,6 +1,4 @@
-package handshake
-
-import "io"
+package peers
 
 type Handshake struct {
 	Pstr     string
@@ -18,9 +16,4 @@ func (h *Handshake) Serialize() []byte {
 	curr += copy(buf[curr:], h.InfoHash[:])
 	curr += copy(buf[curr:], h.PeerID[:])
 	return buf
-}
-
-func Read(r io.Reader) (*Handshake, error) {
-
-	return nil, nil
 }

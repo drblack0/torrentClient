@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"io"
+	"net"
 	"net/http"
 	"os"
 	"time"
@@ -55,6 +58,63 @@ func main() {
 
 	peerListDecoded, err := peers.Unmarshal(peerList)
 
-	fmt.Println("peerlist: ", peerListDecoded[1].IP)
+	for _, item := range peerListDecoded {
+		peerAddress := fmt.Sprintf("%s:%d", item.IP, item.Port)
 
+		peers.ConnectToPeer([20]byte(hash), [20]byte(tf.PeerId), peerAddress)
+
+		handshake := &peers.Handshake{
+			Pstr:     "BitTorrent protocol",
+			InfoHash: [20]byte(hash),
+			PeerID:   [20]byte(tf.PeerId),
+		}
+
+		serializedMsg := handshake.Serialize()
+
+		conn, err := net.DialTimeout("tcp", peerAddress, 5*time.Second)
+
+		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+			fmt.Printf("Connection to %s timed out. Trying next.\n", peerAddress)
+			continue // This was a timeout, it's expected, so we just move on.
+		}
+
+		conn.Write(serializedMsg)
+
+		handshakeResp := make([]byte, 68)
+
+		_, err = io.ReadFull(conn, handshakeResp)
+
+		if err != nil {
+			fmt.Println("error while reading the handshake resp: ", err)
+			return
+		}
+
+		for {
+
+			fmt.Println("here in the for loop")
+			lengthPrefix := make([]byte, 4)
+
+			_, err = io.ReadFull(conn, lengthPrefix)
+
+			if err != nil {
+				fmt.Println("error while reading the lenght prefix: ", err)
+			}
+			lenght := binary.BigEndian.Uint32(lengthPrefix)
+
+			if lenght == 0 {
+				fmt.Println("got keep alive from the client, continuing")
+				continue
+			}
+			messageBuf := make([]byte, lenght)
+
+			_, err = io.ReadFull(conn, messageBuf)
+
+			if err != nil {
+				fmt.Println("error while reading complete messageId and payload: ", err)
+			}
+
+			fmt.Println("testing to see the message id: ", string(messageBuf[0]))
+		}
+
+	}
 }

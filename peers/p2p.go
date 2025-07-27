@@ -3,14 +3,15 @@ package peers
 import (
 	"encoding/binary"
 	"fmt"
+	"io"
 	"net"
+	"time"
 )
 
 type Peer struct {
 	IP   net.IP
 	Port uint16
 }
-
 
 func Unmarshal(peersData interface{}) ([]Peer, error) {
 	switch peersValue := peersData.(type) {
@@ -61,4 +62,59 @@ func Unmarshal(peersData interface{}) ([]Peer, error) {
 	}
 
 	return nil, fmt.Errorf("peers field is in an unexpected format: %T", peersData)
+}
+
+func ConnectToPeer(infoHash [20]byte, peerId [20]byte, peerIp string) error {
+	handshake := &Handshake{
+		Pstr:     "BitTorrent protocol",
+		InfoHash: infoHash,
+		PeerID:   peerId,
+	}
+
+	serializedMsg := handshake.Serialize()
+
+	conn, err := net.DialTimeout("tcp", peerIp, 5*time.Second)
+
+	if err != nil {
+		fmt.Println("error while dialing tcp connection: ", err)
+		return err
+	}
+
+	conn.Write(serializedMsg)
+
+	handshakeResp := make([]byte, 68)
+
+	_, err = io.ReadFull(conn, handshakeResp)
+
+	if err != nil {
+		fmt.Println("error while reading the handshake resp: ", err)
+		return err
+	}
+
+	for {
+
+		fmt.Println("here in the for loop")
+		lengthPrefix := make([]byte, 4)
+
+		_, err = io.ReadFull(conn, lengthPrefix)
+
+		if err != nil {
+			fmt.Println("error while reading the lenght prefix: ", err)
+		}
+		lenght := binary.BigEndian.Uint32(lengthPrefix)
+
+		if lenght == 0 {
+			fmt.Println("got keep alive from the client, continuing")
+			continue
+		}
+		messageBuf := make([]byte, lenght)
+
+		_, err = io.ReadFull(conn, messageBuf)
+
+		if err != nil {
+			fmt.Println("error while reading complete messageId and payload: ", err)
+		}
+
+		fmt.Println("testing to see the message id: ", string(messageBuf[0]))
+	}
 }

@@ -37,6 +37,7 @@ type TorrentFile struct {
 	CreatedBy    string     `bencode:"created by"     json:"created by"`
 	Encoding     string     `bencode:"encoding"       json:"encoding"`
 	InfoBytes    []byte     `bencode:"infoBytes"	  json:"infoBytes"`
+	PeerId       []byte     `bencode:"peerId" json:"peerId`
 }
 
 func Open(path string) (*TorrentFile, error) {
@@ -97,6 +98,8 @@ func (tf *TorrentFile) BuildTrackerUrl(infoHash [20]byte) (string, error) {
 		return "", err
 	}
 
+	tf.PeerId = peerId
+	
 	var left int
 
 	for _, item := range tf.Info.Files {
