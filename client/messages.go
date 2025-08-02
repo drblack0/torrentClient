@@ -1,4 +1,4 @@
-package messages
+package client
 
 import (
 	"encoding/binary"
@@ -29,7 +29,7 @@ func (m *Message) Serialize() []byte {
 		return make([]byte, 0)
 	}
 
-	length := uint32(len(m.Payload) + 1)
+	length := uint32(len(m.Payload) + 1) 
 	buf := make([]byte, 4*length)
 	binary.BigEndian.PutUint32(buf[0:4], length)
 	copy(buf[5:], m.Payload)

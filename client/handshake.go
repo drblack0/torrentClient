@@ -1,4 +1,4 @@
-package peers
+package client
 
 type Handshake struct {
 	Pstr     string
