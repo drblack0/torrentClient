@@ -29,10 +29,13 @@ func (m *Message) Serialize() []byte {
 		return make([]byte, 0)
 	}
 
-	length := uint32(len(m.Payload) + 1) 
-	buf := make([]byte, 4*length)
+	length := uint32(len(m.Payload) + 1)
+	buf := make([]byte, 4+length)
 	binary.BigEndian.PutUint32(buf[0:4], length)
-	copy(buf[5:], m.Payload)
+	buf[4] = byte(m.ID)
+	if len(m.Payload) > 0 {
+		copy(buf[5:], m.Payload)
+	}
 	return buf
 }
 
